@@ -481,6 +481,11 @@ public abstract class TestBase extends SystemTestRunListener {
         TestUtils.waitForNBrokerReplicas(kubernetes, addressSpace.getNamespace(), expectedReplicas, destination, budget);
     }
 
+    protected void waitForRouterReplicas(AddressSpace addressSpace, int expectedReplicas) throws InterruptedException {
+        TimeoutBudget budget = new TimeoutBudget(1, TimeUnit.MINUTES);
+        TestUtils.waitForNReplicas(kubernetes, addressSpace.getNamespace(), expectedReplicas, Collections.singletonMap("name", "qdrouterd"), budget);
+    }
+
     /**
      * return list of queue names created for subscribers
      *
@@ -675,7 +680,7 @@ public abstract class TestBase extends SystemTestRunListener {
      */
     protected List<KeycloakCredentials> createUsersWildcard(AddressSpace addressSpace, String groupPrefix) throws Exception {
         List<KeycloakCredentials> users = new ArrayList<>();
-        if(addressSpace.getType() == AddressSpaceType.BROKERED) {
+        if (addressSpace.getType() == AddressSpaceType.BROKERED) {
             users.add(new KeycloakCredentials("user_" + groupPrefix + "_#", "password"));
             users.add(new KeycloakCredentials("user_" + groupPrefix + "_queue.#", "password"));
             users.add(new KeycloakCredentials("user_" + groupPrefix + "_topic.#", "password"));
@@ -683,7 +688,7 @@ public abstract class TestBase extends SystemTestRunListener {
             users.add(new KeycloakCredentials("user_" + groupPrefix + "_topic.*", "password"));
             users.add(new KeycloakCredentials("user_" + groupPrefix + "_queueA*", "password"));
             users.add(new KeycloakCredentials("user_" + groupPrefix + "_topicA*", "password"));
-        }else {
+        } else {
             users.add(new KeycloakCredentials("user_" + groupPrefix + "_*", "password"));
             users.add(new KeycloakCredentials("user_" + groupPrefix + "_queue*", "password"));
             users.add(new KeycloakCredentials("user_" + groupPrefix + "_topic*", "password"));
