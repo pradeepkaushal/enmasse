@@ -22,19 +22,6 @@ var kubernetes = require('./kubernetes.js');
 var log = require('./log.js').logger();
 var myutils = require('./utils.js');
 
-function AddressSource(address_space, config) {
-    this.address_space = address_space;
-    this.config = config || {};
-    var options = this.config;
-    options.selector = 'type=address-config';
-    events.EventEmitter.call(this);
-    this.watcher = kubernetes.watch('configmaps', options);
-    this.watcher.on('updated', this.updated.bind(this));
-    this.readiness = {};
-}
-
-util.inherits(AddressSource, events.EventEmitter);
-
 function extract_address(object) {
     try {
         return JSON.parse(object.data['config.json']);
@@ -68,27 +55,82 @@ function ready (addr) {
     return addr && addr.status && addr.status.phase !== 'Terminating' && addr.status.phase !== 'Pending';
 }
 
-AddressSource.prototype.dispatch = function (name, object) {
-    log.info('%s: %j', name, object);
-    this.emit(name, object);
-};
+function same_address_definition(a, b) {
+    return a.address === b.address && a.type === b.type && a.allocated_to === b.allocated_to;
+}
 
+function same_address_status(a, b) {
+    if (a === undefined) return b === undefined;
+    return a.isReady === b.isReady && a.phase === b.phase && a.message === b.message;
+}
+
+function same_address_definition_and_status(a, b) {
+    return same_address_definition(a, b) && same_address_status(a.status, b.status);
+}
+
+function address_compare(a, b) {
+    return myutils.string_compare(a.address, b.address);
+}
+
+function configmap_compare(a, b) {
+    return myutils.string_compare(a.metadata.name, b.metadata.name);
+}
+
+function by_address(a) {
+    return a.address;
+}
+
+function description(list) {
+    const max = 5;
+    if (list.length > max) {
+        return list.slice(0, max).map(by_address).join(', ') + ' and ' + (list.length - max) + ' more';
+    } else {
+        return JSON.stringify(list.map(by_address));
+    }
+}
+
+function AddressSource(address_space, config) {
+    this.address_space = address_space;
+    this.config = config || {};
+    var options = this.config;
+    options.selector = 'type=address-config';
+    events.EventEmitter.call(this);
+    this.watcher = kubernetes.watch('configmaps', options);
+    this.watcher.on('updated', this.updated.bind(this));
+    this.readiness = {};
+    this.last = {};
+}
+
+util.inherits(AddressSource, events.EventEmitter);
+
+AddressSource.prototype.dispatch = function (name, addresses, unchanged) {
+    var c = myutils.changes(this.last[name], addresses, address_compare, unchanged, description);
+    this.last[name] = addresses;
+    if (c) {
+        log.info('%s: %s', name, c.description);
+        this.emit(name, addresses);
+    }
+};
 
 AddressSource.prototype.update_readiness = function (objects) {
     var self = this;
-    this.readiness = objects.reduce(function (map, configmap) {
+
+    objects.forEach(function (configmap) {
         var address = extract_address_field(configmap);
-        map[address] = self.readiness[address] || {ready: false, address: address};
-        map[address].name = configmap.metadata.name;
-        return map;
-    }, {});
+        var record = self.readiness[address];
+        if (record === undefined) {
+            record = {ready: false, address: address, name: configmap.metadata.name};
+            self.readiness[address] = record;
+        }
+    });
 };
 
 AddressSource.prototype.updated = function (objects) {
+    objects.sort(configmap_compare);
     log.debug('addresses updated: %j', objects);
     this.update_readiness(objects);
-    this.dispatch('addresses_defined', objects.map(extract_address).filter(is_defined).map(extract_spec));
-    this.dispatch('addresses_ready', objects.map(extract_address).filter(ready).map(extract_spec));
+    this.dispatch('addresses_defined', objects.map(extract_address).filter(is_defined).map(extract_spec), same_address_definition_and_status);
+    this.dispatch('addresses_ready', objects.map(extract_address).filter(ready).map(extract_spec), same_address_definition);
 };
 
 AddressSource.prototype.update_status = function (record, ready) {
