@@ -6,12 +6,10 @@ package io.enmasse.systemtest.marathon;
 
 import io.enmasse.systemtest.AddressType;
 import io.enmasse.systemtest.CustomLogger;
-import io.enmasse.systemtest.IsolatedAddressSpace;
-import io.enmasse.systemtest.MarathonTests;
 import io.enmasse.systemtest.bases.TestBase;
 import io.enmasse.systemtest.amqp.AmqpClient;
 import org.junit.Rule;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
 import org.junit.rules.ErrorCollector;
 import org.slf4j.Logger;
 
@@ -19,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-@Category({IsolatedAddressSpace.class, MarathonTests.class})
+@Tag("marathon")
 public class MarathonTestBase extends TestBase {
     private static Logger log = CustomLogger.getLogger();
     ArrayList<AmqpClient> clients = new ArrayList<>();

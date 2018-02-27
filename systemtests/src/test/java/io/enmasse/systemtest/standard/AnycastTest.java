@@ -10,6 +10,7 @@ import io.enmasse.systemtest.bases.StandardTestBase;
 import io.enmasse.systemtest.amqp.AmqpClient;
 import org.apache.qpid.proton.message.Message;
 import org.junit.Test;
+import org.junit.jupiter.api.Tag;
 
 import java.util.Arrays;
 import java.util.List;
