@@ -70,22 +70,28 @@ pipeline {
                 DOCKER_CREDENTIALS = credentials('docker-registry-credentials')
                 DOCKER_PASS = "${env.DOCKER_CREDENTIALS_PSW}"
                 DOCKER_USER = "${env.DOCKER_CREDENTIALS_USR}"
-                COMMIT = "latest"
+                COMMIT = 'latest'
                 ADDRESS_CONTROLLER_IMAGE = 'amqmaas10-addresscontroller-openshift'
+                STANDARD_CONTROLLER_IMAGE = 'amqmaas10-standardcontroller-openshift'
                 ROUTER_IMAGE = 'amqmaas10-interconnect-openshift'
                 ARTEMIS_IMAGE = 'amqmaas10-broker-openshift'
                 TOPIC_FORWARDER_IMAGE = 'amqmaas10-topicforwarder-openshift'
                 ROUTER_METRICS_IMAGE = 'amqmaas10-routermetrics-openshift'
                 CONFIGSERV_IMAGE = 'amqmaas10-configserv-openshift'
                 QUEUE_SCHEDULER_IMAGE = 'amqmaas10-queuescheduler-openshift'
-                RAGENT_IMAGE = 'amqmaas10-routeragent-openshift'
-                SUBSERV_IMAGE = 'amqmaas10-subscriptionservice-openshift'
+                RAGENT_IMAGE = 'amqmaas10-ragent-openshift'
+                SUBSERV_IMAGE = 'amqmaas10-subserv-openshift'
                 AGENT_IMAGE = 'amqmaas10-agent-openshift'
                 MQTT_GATEWAY_IMAGE = 'amqmaas10-mqttgateway-openshift'
                 MQTT_LWT_IMAGE = 'amqmaas10-mqttlwt-openshift'
                 NONE_AUTHSERVICE_IMAGE = 'amqmaas10-noneauthservice-openshift'
-                KEYCLOAK_IMAGE = 'amqmaas10-auth-openshift'
+                KEYCLOAK_IMAGE = 'redhat-sso-7/sso72'
+                KEYCLOAK_PLUGIN_IMAGE = 'amqmaas10-auth-openshift'
                 KEYCLOAK_CONTROLLER_IMAGE = 'amqmaas10-auth-controller-openshift'
+
+                KEYCLOAK_HOME = '/opt/eap'
+                ADD_KEYCLOAK_USER = 'true'
+                NODE_CMD = '/opt/app-root/src/bin/launch_node.sh'
             }
             steps {
                 withCredentials([string(credentialsId: 'openshift-host', variable: 'OPENSHIFT_URL'), usernamePassword(credentialsId: 'openshift-credentials', passwordVariable: 'OPENSHIFT_PASSWD', usernameVariable: 'OPENSHIFT_USER')]) {
