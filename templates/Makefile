@@ -20,7 +20,7 @@ KEYCLOAK_CONTROLLER_IMAGE ?= "keycloak-controller"
 
 KEYCLOAK_HOME ?= "/opt/jboss/keycloak"
 ADD_KEYCLOAK_USER ?= "false"
-NODE_CMD="node"
+NODE_CMD ?= "node"
 
 SRCS=$(wildcard *.jsonnet)
 OBJS=$(patsubst %.jsonnet,%.json,$(SRCS))
